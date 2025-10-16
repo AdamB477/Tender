@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Switch, Route } from "wouter";
+import { useState, useEffect } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,52 +10,83 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { AppSidebar } from "@/components/AppSidebar";
 import TendererDashboard from "@/pages/TendererDashboard";
 import ContractorDashboard from "@/pages/ContractorDashboard";
+import MyTenders from "@/pages/MyTenders";
+import FindContractors from "@/pages/FindContractors";
+import FindTenders from "@/pages/FindTenders";
+import MyBids from "@/pages/MyBids";
+import MyCrewPage from "@/pages/MyCrewPage";
+import CompliancePage from "@/pages/CompliancePage";
 import NotFound from "@/pages/not-found";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
-function Router() {
-  const [userType, setUserType] = useState<"tenderer" | "contractor">("tenderer");
-
+function Router({ userType }: { userType: "tenderer" | "contractor" }) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border">
-        <span className="text-sm font-medium">Demo Mode - Switch View:</span>
-        <div className="flex gap-2">
-          <Button
-            variant={userType === "tenderer" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setUserType("tenderer")}
-            data-testid="button-switch-tenderer"
-          >
-            Tenderer View
-          </Button>
-          <Button
-            variant={userType === "contractor" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setUserType("contractor")}
-            data-testid="button-switch-contractor"
-          >
-            Contractor View
-          </Button>
-        </div>
-        <Badge variant="secondary" className="ml-auto">
-          {userType === "tenderer" ? "Awarding Jobs" : "Bidding on Jobs"}
-        </Badge>
-      </div>
+    <Switch>
+      <Route path="/">
+        {userType === "tenderer" ? <TendererDashboard /> : <ContractorDashboard />}
+      </Route>
       
-      <Switch>
-        <Route path="/">
-          {userType === "tenderer" ? <TendererDashboard /> : <ContractorDashboard />}
-        </Route>
-        <Route component={NotFound} />
-      </Switch>
-    </div>
+      {/* Tenderer routes */}
+      {userType === "tenderer" && (
+        <>
+          <Route path="/tenders" component={MyTenders} />
+          <Route path="/contractors" component={FindContractors} />
+        </>
+      )}
+      
+      {/* Contractor routes */}
+      {userType === "contractor" && (
+        <>
+          <Route path="/tenders" component={FindTenders} />
+          <Route path="/my-bids" component={MyBids} />
+          <Route path="/crew" component={MyCrewPage} />
+          <Route path="/compliance" component={CompliancePage} />
+        </>
+      )}
+      
+      {/* Common routes - placeholder for now */}
+      <Route path="/bids">
+        <div className="p-6">
+          <h1 className="text-2xl font-semibold mb-4">Bids</h1>
+          <p className="text-muted-foreground">Bids page coming soon...</p>
+        </div>
+      </Route>
+      <Route path="/messages">
+        <div className="p-6">
+          <h1 className="text-2xl font-semibold mb-4">Messages</h1>
+          <p className="text-muted-foreground">Messages page coming soon...</p>
+        </div>
+      </Route>
+      <Route path="/analytics">
+        <div className="p-6">
+          <h1 className="text-2xl font-semibold mb-4">Analytics</h1>
+          <p className="text-muted-foreground">Analytics page coming soon...</p>
+        </div>
+      </Route>
+      <Route path="/settings">
+        <div className="p-6">
+          <h1 className="text-2xl font-semibold mb-4">Settings</h1>
+          <p className="text-muted-foreground">Settings page coming soon...</p>
+        </div>
+      </Route>
+      
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 
 export default function App() {
   const [userType, setUserType] = useState<"tenderer" | "contractor">("tenderer");
+  const [location, setLocation] = useLocation();
+  const [previousUserType, setPreviousUserType] = useState<"tenderer" | "contractor">("tenderer");
+
+  // Navigate to home when user type changes to avoid 404s
+  useEffect(() => {
+    if (userType !== previousUserType) {
+      setLocation("/");
+      setPreviousUserType(userType);
+    }
+  }, [userType, previousUserType, setLocation]);
 
   const sidebarStyle = {
     "--sidebar-width": "20rem",
@@ -96,7 +127,7 @@ export default function App() {
                   <ThemeToggle />
                 </header>
                 <main className="flex-1 overflow-auto p-6">
-                  {userType === "tenderer" ? <TendererDashboard /> : <ContractorDashboard />}
+                  <Router userType={userType} />
                 </main>
               </div>
             </div>

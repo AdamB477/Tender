@@ -30,9 +30,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 
 const formSchema = insertTenderSchema.extend({
   budgetMin: z.coerce.number().positive("Budget minimum must be positive"),
@@ -54,6 +55,8 @@ interface CreateTenderDialogProps {
 
 export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDialogProps) {
   const [open, setOpen] = useState(false);
+  const [scopeItems, setScopeItems] = useState<string[]>([]);
+  const [currentScopeItem, setCurrentScopeItem] = useState("");
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -89,6 +92,7 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
         requiredCompliance: requiredComplianceText
           ? requiredComplianceText.split(",").map((s) => s.trim()).filter(Boolean)
           : [],
+        scopeOfWork: scopeItems,
       };
 
       const response = await apiRequest("POST", "/api/tenders", tenderData);
@@ -102,6 +106,8 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
       });
       setOpen(false);
       form.reset();
+      setScopeItems([]);
+      setCurrentScopeItem("");
     },
     onError: (error: Error) => {
       toast({
@@ -114,6 +120,17 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
 
   const onSubmit = (data: FormData) => {
     createTenderMutation.mutate(data);
+  };
+
+  const addScopeItem = () => {
+    if (currentScopeItem.trim()) {
+      setScopeItems([...scopeItems, currentScopeItem.trim()]);
+      setCurrentScopeItem("");
+    }
+  };
+
+  const removeScopeItem = (index: number) => {
+    setScopeItems(scopeItems.filter((_, i) => i !== index));
   };
 
   return (
@@ -265,6 +282,59 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
                 </FormItem>
               )}
             />
+
+            <div className="space-y-3">
+              <FormLabel>Scope of Work</FormLabel>
+              <p className="text-sm text-muted-foreground">
+                Add items that contractors must agree to complete when bidding
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g., Install electrical wiring"
+                  value={currentScopeItem}
+                  onChange={(e) => setCurrentScopeItem(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addScopeItem();
+                    }
+                  }}
+                  data-testid="input-scope-item"
+                />
+                <Button
+                  type="button"
+                  onClick={addScopeItem}
+                  variant="outline"
+                  size="icon"
+                  data-testid="button-add-scope-item"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {scopeItems.length > 0 && (
+                <div className="space-y-2 p-3 bg-muted rounded-md">
+                  {scopeItems.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between gap-2 p-2 bg-background rounded"
+                      data-testid={`scope-item-${index}`}
+                    >
+                      <span className="text-sm flex-1">{item}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => removeScopeItem(index)}
+                        data-testid={`button-remove-scope-item-${index}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

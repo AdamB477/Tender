@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { StatsCard } from "@/components/StatsCard";
 import { ContractorListItem } from "@/components/ContractorListItem";
 import { BidCard } from "@/components/BidCard";
@@ -8,117 +9,89 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const DEMO_ORG_ID = "org-tenderer-1";
+const DEMO_TENDER_ID = "tender-1";
+
 export default function TendererDashboard() {
   const [selectedContractor, setSelectedContractor] = useState<any>(null);
 
-  const mockContractors = [
-    {
-      id: "1",
-      name: "BuildCorp Construction",
-      matchScore: 94,
-      rating: 4.8,
-      reviewCount: 156,
-      distance: "12km",
-      available: true,
-      complianceValid: true,
-      capabilityFit: 92,
-      whyMatched: [
-        { type: "skills" as const, value: "94%" },
-        { type: "location" as const, value: "12km" },
-        { type: "reliability" as const, value: "4.8" },
-      ],
-      logo: "",
-      location: "Sydney, NSW",
-      description: "Leading construction company with 20+ years experience in commercial and residential projects.",
-      capabilities: ["Commercial Fitouts", "Electrical", "Plumbing", "HVAC"],
-      compliance: [
-        { type: "Public Liability Insurance", status: "valid" as const, issuedDate: "Jan 2024", expiryDate: "Jan 2026" },
-        { type: "White Card", status: "valid" as const, issuedDate: "Mar 2023", expiryDate: "Mar 2028" },
-      ],
-      crew: [
-        {
-          name: "John Mitchell",
-          role: "Site Supervisor",
-          complianceScore: 100,
-          docs: [
-            { type: "Medical", status: "valid" as const },
-            { type: "License", status: "valid" as const },
-          ],
-        },
-      ],
-      reviews: [
-        { author: "ABC Corp", rating: 5, comment: "Excellent work on our office fitout.", date: "2 weeks ago" },
-      ],
-    },
-    {
-      id: "2",
-      name: "Elite Engineering Services",
-      matchScore: 88,
-      rating: 4.6,
-      reviewCount: 92,
-      distance: "25km",
-      available: true,
-      complianceValid: true,
-      capabilityFit: 85,
-      whyMatched: [
-        { type: "skills" as const, value: "88%" },
-        { type: "availability" as const, value: "Now" },
-      ],
-      logo: "",
-      location: "Parramatta, NSW",
-      description: "Specialized engineering services for commercial projects.",
-      capabilities: ["Electrical", "HVAC", "Fire Systems"],
-      compliance: [
-        { type: "Public Liability Insurance", status: "valid" as const, issuedDate: "Jan 2024", expiryDate: "Jan 2026" },
-      ],
-      crew: [
-        {
-          name: "Sarah Chen",
-          role: "Electrician",
-          complianceScore: 85,
-          docs: [
-            { type: "Medical", status: "valid" as const },
-            { type: "License", status: "expiring" as const },
-          ],
-        },
-      ],
-      reviews: [
-        { author: "XYZ Ltd", rating: 4, comment: "Good quality work.", date: "1 month ago" },
-      ],
-    },
-  ];
+  const { data: stats } = useQuery({
+    queryKey: ['/api/stats/tenderer', DEMO_ORG_ID],
+    queryFn: () => fetch(`/api/stats/tenderer/${DEMO_ORG_ID}`).then(res => res.json()),
+  });
 
-  const mockBids = [
-    {
-      id: "1",
-      contractorName: "BuildCorp Construction",
-      price: "$285,000",
-      duration: "12 weeks",
-      crewCount: 8,
-      status: "shortlisted" as const,
-      hasMethodStatement: true,
-      submittedDate: "2 days ago",
-    },
-    {
-      id: "2",
-      contractorName: "Elite Engineering",
-      price: "$310,000",
-      duration: "14 weeks",
-      crewCount: 6,
-      status: "pending" as const,
-      hasMethodStatement: true,
-      submittedDate: "1 day ago",
-    },
-    {
-      id: "3",
-      contractorName: "Quality Builders",
-      price: "$265,000",
-      duration: "10 weeks",
-      status: "pending" as const,
-      hasMethodStatement: false,
-      submittedDate: "3 hours ago",
-    },
-  ];
+  const { data: contractors = [] } = useQuery({
+    queryKey: ['/api/match/contractors', DEMO_TENDER_ID],
+    queryFn: () => fetch(`/api/match/contractors/${DEMO_TENDER_ID}?limit=5`).then(res => res.json()),
+  });
+
+  const { data: bids = [] } = useQuery({
+    queryKey: ['/api/bids', DEMO_TENDER_ID],
+    queryFn: () => fetch(`/api/bids?tenderId=${DEMO_TENDER_ID}`).then(res => res.json()),
+  });
+
+  const { data: complianceDocs = [] } = useQuery({
+    queryKey: ['/api/compliance', 'organization', selectedContractor?.id],
+    enabled: !!selectedContractor?.id,
+    queryFn: () => fetch(`/api/compliance?entityType=organization&entityId=${selectedContractor.id}`).then(res => res.json()),
+  });
+
+  const { data: crewMembers = [] } = useQuery({
+    queryKey: ['/api/crew', selectedContractor?.id],
+    enabled: !!selectedContractor?.id,
+    queryFn: () => fetch(`/api/crew?organizationId=${selectedContractor.id}`).then(res => res.json()),
+  });
+
+  const mappedContractors = contractors.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    logo: c.logoUrl,
+    matchScore: c.matchScore || 0,
+    rating: parseFloat(c.rating || "0"),
+    reviewCount: c.reviewCount || 0,
+    distance: c.distance || "0km",
+    available: c.available,
+    complianceValid: true,
+    capabilityFit: c.matchScore || 0,
+    whyMatched: [
+      { type: "skills" as const, value: `${c.matchScore || 0}%` },
+      { type: "location" as const, value: c.distance || "0km" },
+    ],
+  }));
+
+  const mappedBids = bids.map((b: any) => ({
+    id: b.bid.id,
+    contractorName: b.contractor?.name || "Unknown",
+    contractorLogo: b.contractor?.logoUrl,
+    price: `$${parseFloat(b.bid.price).toLocaleString()}`,
+    duration: `${b.bid.duration} weeks`,
+    crewCount: b.bid.crewCount,
+    status: b.bid.status,
+    hasMethodStatement: !!b.bid.methodStatement,
+    submittedDate: new Date(b.bid.submittedAt).toLocaleDateString(),
+  }));
+
+  const selectedContractorDetails = selectedContractor ? {
+    ...selectedContractor,
+    compliance: complianceDocs.map((doc: any) => ({
+      type: doc.type,
+      status: doc.status,
+      issuedDate: doc.issuedDate ? new Date(doc.issuedDate).toLocaleDateString() : '',
+      expiryDate: doc.expiryDate ? new Date(doc.expiryDate).toLocaleDateString() : '',
+    })),
+    crew: crewMembers.map((member: any) => ({
+      name: member.name,
+      role: member.role,
+      complianceScore: member.complianceScore || 0,
+      docs: [
+        { type: "Medical", status: "valid" as const },
+        { type: "License", status: "valid" as const },
+      ],
+    })),
+    reviews: [
+      { author: "ABC Corp", rating: 5, comment: "Excellent work", date: "2 weeks ago" },
+    ],
+  } : null;
 
   return (
     <div className="space-y-6">
@@ -134,10 +107,34 @@ export default function TendererDashboard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatsCard title="Active Tenders" value="12" icon={FileText} change={15} trend="up" />
-        <StatsCard title="Bids Received" value="47" icon={Users} change={22} trend="up" />
-        <StatsCard title="Avg. Bid Value" value="$285k" icon={DollarSign} change={-8} trend="down" />
-        <StatsCard title="Contractors Shortlisted" value="8" icon={TrendingUp} change={33} trend="up" />
+        <StatsCard 
+          title="Active Tenders" 
+          value={stats?.activeTenders || 0} 
+          icon={FileText} 
+          change={15} 
+          trend="up" 
+        />
+        <StatsCard 
+          title="Bids Received" 
+          value={stats?.bidsReceived || 0} 
+          icon={Users} 
+          change={22} 
+          trend="up" 
+        />
+        <StatsCard 
+          title="Avg. Bid Value" 
+          value={`$${Math.round((stats?.avgBidValue || 0) / 1000)}k`} 
+          icon={DollarSign} 
+          change={-8} 
+          trend="down" 
+        />
+        <StatsCard 
+          title="Contractors Shortlisted" 
+          value={stats?.contractorsShortlisted || 0} 
+          icon={TrendingUp} 
+          change={33} 
+          trend="up" 
+        />
       </div>
 
       <Tabs defaultValue="contractors">
@@ -155,11 +152,11 @@ export default function TendererDashboard() {
               </Button>
             </div>
             <div className="space-y-3">
-              {mockContractors.map((contractor) => (
+              {mappedContractors.map((contractor: any) => (
                 <ContractorListItem
                   key={contractor.id}
                   {...contractor}
-                  onClick={() => setSelectedContractor(contractor)}
+                  onClick={() => setSelectedContractor(contractors.find((c: any) => c.id === contractor.id))}
                   onShortlist={() => console.log("Shortlist", contractor.id)}
                 />
               ))}
@@ -169,7 +166,7 @@ export default function TendererDashboard() {
 
         <TabsContent value="bids" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {mockBids.map((bid) => (
+            {mappedBids.map((bid: any) => (
               <BidCard
                 key={bid.id}
                 {...bid}
@@ -182,17 +179,17 @@ export default function TendererDashboard() {
         </TabsContent>
       </Tabs>
 
-      {selectedContractor && (
+      {selectedContractorDetails && (
         <ContractorDetailsDrawer
-          open={!!selectedContractor}
+          open={!!selectedContractorDetails}
           onClose={() => setSelectedContractor(null)}
-          contractor={selectedContractor}
+          contractor={selectedContractorDetails}
           onRequestBid={() => {
-            console.log("Request bid from", selectedContractor.name);
+            console.log("Request bid from", selectedContractorDetails.name);
             setSelectedContractor(null);
           }}
           onMessage={() => {
-            console.log("Message", selectedContractor.name);
+            console.log("Message", selectedContractorDetails.name);
             setSelectedContractor(null);
           }}
         />

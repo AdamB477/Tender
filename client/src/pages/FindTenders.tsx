@@ -5,6 +5,8 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ViewTenderDialog } from "@/components/ViewTenderDialog";
+import { SubmitBidDialog } from "@/components/SubmitBidDialog";
 
 const DEMO_CONTRACTOR_ID = "org-contractor-1";
 
@@ -111,12 +113,23 @@ export default function FindTenders() {
               </CardContent>
               
               <CardFooter className="flex gap-2 pt-4">
-                <Button variant="outline" size="sm" data-testid={`button-view-${tender.id}`}>
-                  View Details
-                </Button>
-                <Button size="sm" className="ml-auto" data-testid={`button-bid-${tender.id}`}>
-                  Submit Bid
-                </Button>
+                <ViewTenderDialog
+                  tenderId={tender.id}
+                  trigger={
+                    <Button variant="outline" size="sm" data-testid={`button-view-${tender.id}`}>
+                      View Details
+                    </Button>
+                  }
+                />
+                <SubmitBidDialog
+                  tenderId={tender.id}
+                  contractorId={DEMO_CONTRACTOR_ID}
+                  trigger={
+                    <Button size="sm" className="ml-auto" data-testid={`button-bid-${tender.id}`}>
+                      Submit Bid
+                    </Button>
+                  }
+                />
               </CardFooter>
             </Card>
           );

@@ -4,6 +4,7 @@ import { StatsCard } from "@/components/StatsCard";
 import { ContractorListItem } from "@/components/ContractorListItem";
 import { BidCard } from "@/components/BidCard";
 import { ContractorDetailsDrawer } from "@/components/ContractorDetailsDrawer";
+import { CreateTenderDialog } from "@/components/CreateTenderDialog";
 import { FileText, Users, DollarSign, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -100,10 +101,15 @@ export default function TendererDashboard() {
           <h1 className="text-3xl font-semibold mb-2">Tenderer Dashboard</h1>
           <p className="text-muted-foreground">Manage your tenders and find qualified contractors</p>
         </div>
-        <Button size="lg" data-testid="button-create-tender">
-          <FileText className="h-4 w-4 mr-2" />
-          Create Tender
-        </Button>
+        <CreateTenderDialog
+          organizationId={DEMO_ORG_ID}
+          trigger={
+            <Button size="lg" data-testid="button-create-tender">
+              <FileText className="h-4 w-4 mr-2" />
+              Create Tender
+            </Button>
+          }
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

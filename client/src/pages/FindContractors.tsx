@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ViewContractorProfileDialog } from "@/components/ViewContractorProfileDialog";
+import { SendMessageDialog } from "@/components/SendMessageDialog";
+
+const DEMO_ORG_ID = "org-tenderer-1";
 
 export default function FindContractors() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,12 +109,24 @@ export default function FindContractors() {
             </CardContent>
             
             <CardFooter className="flex gap-2 pt-4">
-              <Button variant="outline" size="sm" data-testid={`button-view-profile-${contractor.id}`}>
-                View Profile
-              </Button>
-              <Button size="sm" data-testid={`button-message-${contractor.id}`}>
-                Send Message
-              </Button>
+              <ViewContractorProfileDialog
+                contractorId={contractor.id}
+                trigger={
+                  <Button variant="outline" size="sm" data-testid={`button-view-profile-${contractor.id}`}>
+                    View Profile
+                  </Button>
+                }
+              />
+              <SendMessageDialog
+                senderId={DEMO_ORG_ID}
+                receiverId={contractor.id}
+                receiverName={contractor.name}
+                trigger={
+                  <Button size="sm" data-testid={`button-message-${contractor.id}`}>
+                    Send Message
+                  </Button>
+                }
+              />
             </CardFooter>
           </Card>
         ))}

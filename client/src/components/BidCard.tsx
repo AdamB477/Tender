@@ -49,17 +49,17 @@ export function BidCard({
   return (
     <Card className="p-4" data-testid={`card-bid-${id}`}>
       <div className="flex items-start justify-between gap-4 mb-3">
-        <div className="flex items-start gap-3">
-          <Avatar className="h-10 w-10">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <Avatar className="h-10 w-10 flex-shrink-0">
             <AvatarImage src={contractorLogo} alt={contractorName} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
-          <div>
-            <h4 className="font-medium text-sm">{contractorName}</h4>
-            <p className="text-xs text-muted-foreground">Submitted {submittedDate}</p>
+          <div className="min-w-0 flex-1">
+            <h4 className="font-medium text-sm truncate">{contractorName}</h4>
+            <p className="text-xs text-muted-foreground truncate">Submitted {submittedDate}</p>
           </div>
         </div>
-        <Badge variant="outline" className={statusConfig[status]}>
+        <Badge variant="outline" className={`${statusConfig[status]} flex-shrink-0`}>
           {status.charAt(0).toUpperCase() + status.slice(1)}
         </Badge>
       </div>

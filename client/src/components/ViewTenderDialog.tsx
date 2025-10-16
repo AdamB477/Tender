@@ -19,10 +19,13 @@ interface ViewTenderDialogProps {
 }
 
 export function ViewTenderDialog({ tenderId, trigger }: ViewTenderDialogProps) {
-  const { data: tender, isLoading } = useQuery<Tender>({
+  const { data: response, isLoading } = useQuery({
     queryKey: ['/api/tenders', tenderId],
     queryFn: () => fetch(`/api/tenders/${tenderId}`).then(res => res.json()),
   });
+
+  // Extract tender from response (API returns { tender: {...}, organization: {...} })
+  const tender = response?.tender as Tender | undefined;
 
   const budget = tender?.budget ? (typeof tender.budget === 'string' ? JSON.parse(tender.budget) : tender.budget) : { min: 0, max: 0 };
 

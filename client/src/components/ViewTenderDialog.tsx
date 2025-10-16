@@ -152,6 +152,31 @@ export function ViewTenderDialog({ tenderId, trigger }: ViewTenderDialogProps) {
               </div>
             )}
 
+            {tender.scopeOfWork && tender.scopeOfWork.length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4" />
+                    Scope of Work
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Items that contractors must agree to complete when bidding
+                  </p>
+                  <div className="bg-muted p-3 rounded-md">
+                    <ul className="space-y-2">
+                      {tender.scopeOfWork.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-sm">
+                          <CheckCircle2 className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
+
             {tender.startDate && (
               <div>
                 <h3 className="text-sm font-medium mb-2">Start Date</h3>

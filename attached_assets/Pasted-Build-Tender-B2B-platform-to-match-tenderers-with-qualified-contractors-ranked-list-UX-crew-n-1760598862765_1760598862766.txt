@@ -1,0 +1,356 @@
+Build “Tender” — B2B platform to match tenderers with qualified contractors (ranked-list UX + crew nominations)
+Product summary
+
+Build Tender, a B2B marketplace that matches tenderers (issue work) with contractors (bid/do the work). The branding nods to “Tinder for tenders,” but UX is professional and list-driven (no swiping). Tenderers see a ranked list of qualified contractors; contractors see a ranked list of relevant tenders. Matching uses region + availability + capability + compliance + historical reliability, and all qualifying, available businesses are notified instantly when a relevant tender posts. After completion, both parties leave ratings that roll up into profile KPIs.
+
+Use the attached Tender Development Package for deeper architecture, algorithms, endpoints, and GTM; implement a production-grade MVP aligned to that spec. 
+
+Tender_Development_Package_Comp…
+
+Users & roles
+
+Tenderer (Business A): create org, post tenders, review ranked matches, request bids, shortlist, message, award, close, rate.
+
+Contractor (Business B): create org, manage capabilities/compliance, toggle Available/Busy, review ranked tenders, bid, deliver, rate.
+
+Admin: trust & safety, disputes, moderation, flags, feature toggles.
+
+Auth: email+password + magic link; org membership & RBAC.
+
+Core features (MVP)
+1) Organization & crew profiles
+
+Organization profile: logo, ABN/EIN, industry & capability tags, contract size band, regions (geo polygons or radius), availability toggle, company compliance vault (licenses/insurance with expiry tracking & badges).
+
+Crew member profiles (NEW): per-individual profiles owned by the business with medicals, police checks, licenses/qualifications, inductions, tickets, experience, competencies, fatigue/shift restrictions, and site passes.
+
+Document types with expiry, verification status, and reminders.
+
+Privacy controls (org-internal by default; share on nomination/award).
+
+Nomination flow: for each bid or award, the contractor nominates specific crew; tenderers can review who will be on site with full compliance visibility to streamline site pass approvals.
+
+2) Tender intake & management
+
+Create/edit tender: title, scope, skills/certs, budget range, location (lat/lon), deadline, attachments.
+
+Status lifecycle: Draft → Open → Awarded → Closed.
+
+Bid room & Q&A: structured clarifications, addenda, version history, exportable audit.
+
+3) Matching engine (explainable & configurable)
+
+Hard gates: compliance valid, availability true.
+
+Score = weighted blend:
+
+S_I Skills/industry cosine (embeddings)
+
+S_L Location proximity (Haversine/PostGIS)
+
+S_A Availability
+
+S_H Historical reliability (on-time %, rating, dispute rate)
+
+Compliance is a hard gate; if failed → excluded.
+
+Persist top factors for Why Matched chips and table columns.
+
+4) Ranked-list discovery (no swiping)
+
+Ranked table with sort/filter/save view: Score, Company, Rating (avg + n), Distance, Availability, Compliance, Capability fit %, Typical job size, Response SLA.
+
+Row → details drawer: company summary, badges, recent reviews, capability highlights, compliance status, Why Matched, Crew nomination preview (post-shortlist).
+
+Compare up to 3 contractors or bids side-by-side with delta highlights.
+
+5) Bids, nominations & awards
+
+Contractor submits bid (price, duration, method statement, files), optionally pre-nominates crew.
+
+Tenderer reviews ranked bids, requests revisions, shortlists, messages, awards.
+
+On award, contractor must finalize crew nominations; tenderer gets a pass-out pack for site (individual docs + statuses).
+
+6) Messaging & notifications
+
+Thread per tender↔contractor (attachments, read receipts, moderation).
+
+Notifications: tender posted → qualifying & available contractors; messages; shortlist; award; ratings due; company/crew compliance expiries.
+
+7) Ratings & performance metrics
+
+Two-way ratings at close.
+
+Beyond stars: show on-time %, variation incidence, defect/redo rate, safety incidents (self-reported), comms responsiveness—fed from milestones.
+
+Category-specific scores (e.g., civil, MEP, fit-out).
+
+8) Analytics
+
+Tenderers: cycle time to award, bid coverage, price vs benchmark, supplier concentration risk, on-time & defect KPIs, regional supply/demand heatmaps.
+
+Contractors: win rate by category/size/region, price position vs range, response time, capacity utilization.
+
+9) Trust, safety & compliance
+
+KYB: ABN/EIN verification, director watchlists, insurance checks, doc hash/fingerprint.
+
+Dispute workflow with evidence timeline; outcomes feed into reliability.
+
+Privacy & least-privilege access for crew personal data; consent logs and redaction on request.
+
+Market-fit upgrades (beyond MVP)
+Pre-qualification & supplier panels
+
+Reusable pre-qual packs (WHS/safety, insurances, ISO, financials). Contractors complete once; auto-reuse with expiry tracking and panel membership logic.
+
+Capacity & calendar
+
+Crew/equipment capacity windows, blackout dates, travel radius, shift types; matching respects real capacity, not just Available/Busy.
+
+Learning loop & market signals
+
+Train a win-probability model from shortlists/awards/outcomes; recommend who to invite and what to bid. Provide demand vs capacity heatmaps and pricing bands (privacy-preserving aggregates).
+
+Enterprise readiness
+
+Security & governance: SSO/SAML, SCIM, SOC 2 roadmap, ISO 27001 controls, AU data residency option, full audit logs.
+
+Policy compliance: multi-bid rules, COI attestations, supplier diversity filters (local/SME/Indigenous), shortlist caps by spend band.
+
+Contracts & e-sign: standard templates (e.g., AS 4000/MW21), redlines, clause risk flags.
+
+Integrations: Procore, Autodesk Build, SAP Ariba/Fieldglass, Oracle Aconex; finance (Xero/MYOB/QB for PO→invoice 3-way match); ABN/licensing/insurance verification APIs.
+
+Growth loops
+
+Contractor CRM-lite (free): pipeline, reminders, bid templates, doc vault, compliance alerts.
+
+Lead routing & invitations with enrichment/dedupe of imported supplier lists.
+
+Reputation portability: embeddable public profile widgets; verified badges.
+
+Content/data: quarterly benchmarks and insights as Pro/Enterprise perks.
+
+Monetisation
+
+Free (limits on tenders/bids, basic matching).
+
+Pro (advanced filters, bid room/Q&A, capacity calendar, compliance automation).
+
+Enterprise (SSO, audit, contract workflows, integrations, data residency).
+
+Optional take-rate or lead credits; verification & priority listing add-ons.
+
+Technical architecture
+
+Monorepo.
+
+Backend (Python FastAPI)
+
+Services: Auth/Org, Crew, Profiles & Compliance, Tenders, Matching, Messaging, Ratings, Notifications, Pre-qual, Panels.
+
+PostgreSQL (+ PostGIS for geospatial); Redis for cache/queues; OpenSearch/Elasticsearch or Postgres FTS fallback.
+
+Storage: S3-compatible for org/crew docs; antivirus scanning.
+
+Auth: JWT (access/refresh rotation), org-scoped RBAC, field-level access rules for crew PII.
+
+Background jobs: tender create/update → matching → store scores → notify; nightly compliance/expiry checks.
+
+Frontend (React + TypeScript)
+
+State: React Query or RTK Query; optimistic updates for messaging/actions.
+
+UI: DataGrid ranked lists (sorting/filtering/column control), details Drawers, Compare panel, Compliance vaults, Capacity calendar, Bid room/Q&A, Crew nomination wizard, Analytics dashboards.
+
+Forms: React Hook Form + Zod.
+
+Accessibility: WCAG AA; keyboard-first table controls.
+
+Infra/DevEx
+
+Dockerized services; 12-factor config; docker compose up for api/db/redis/(search)/web.
+
+CI: lint, typecheck, tests; Docker build.
+
+Seed script: 3 tenderers, 10 contractors (regions/compliance varied), 12 tenders, sample crew with mixed certifications/expiries, example bids/matches.
+
+Observability: Prometheus/Grafana; structured logs.
+
+(Aligns with the development package’s suggested components: FastAPI/Django, Postgres+PostGIS, Redis, Elasticsearch/OpenSearch, containerized deployment, and modular services.) 
+
+Tender_Development_Package_Comp…
+
+Data model (minimum)
+
+Organizations & users
+
+users(id, email, password_hash, name, …)
+
+organizations(id, name, type {'tenderer','contractor','both'}, abn_ein, …)
+
+org_members(user_id, org_id, role)
+
+Company profile & compliance
+
+company_profiles(org_id, description, industries[], capabilities[], min_contract, max_contract, availability)
+
+company_regions(org_id, geom/lat, lon, radius_km)
+
+compliance_documents(id, org_id, type, issued_on, expires_on, status, file_url, verified_by)
+
+Crew (NEW)
+
+crew_members(id, org_id, first_name, last_name, role, bio, photo_url, active, privacy_level)
+
+crew_documents(id, crew_id, type {'medical','police_check','license','qualification','induction','ticket','site_pass'}, issued_on, expires_on, status, file_url, verified_by)
+
+crew_skills(id, crew_id, skill, level)
+
+crew_availability(id, crew_id, date_range, shift_type, location_pref, capacity_hours)
+
+Tenders, matching & bids
+
+tenders(id, org_id_owner, title, scope, requirements_text, skills[], budget_min, budget_max, location_lat, location_lon, deadline_at, status, attachments[])
+
+matches(id, tender_id, contractor_org_id, score, factors_json, created_at)
+
+bids(id, tender_id, org_id_bidder, price, duration_days, method_statement, files[], status)
+
+bid_nominations(id, bid_id, crew_id, role_on_job, notes) ← crew nominations
+
+shortlists(id, tender_id, contractor_org_id, reason, created_at)
+
+threads(id, tender_id, contractor_org_id, last_msg_at) / messages(...)
+
+ratings(id, from_org_id, to_org_id, tender_id, stars, comment, created_at)
+
+events_audit(...)
+
+Matching algorithm (default weights; env-configurable)
+
+Preprocess text → embeddings.
+
+Gates: valid compliance; availability == true.
+
+S_I Skills/industry cosine (0.45)
+
+S_L Location proximity (0.20)
+
+S_A Availability (0.10)
+
+S_H Historical reliability (0.25)
+
+Score = 0.45*S_I + 0.20*S_L + 0.10*S_A + 0.25*S_H (only if gates pass).
+
+Store “Why Matched” (top 3 contributors) per row.
+
+API (v1) — representative endpoints
+
+Auth & Orgs
+
+POST /api/v1/auth/register|login
+
+POST /api/v1/orgs GET/PUT /api/v1/orgs/{id}
+
+POST /api/v1/orgs/{id}/compliance PATCH /api/v1/orgs/{id}/availability
+
+Crew
+
+POST /api/v1/crew GET/PUT /api/v1/crew/{id} DELETE /api/v1/crew/{id}
+
+POST /api/v1/crew/{id}/documents (upload/verify)
+
+GET /api/v1/crew?org_id= (list + filters/expiry status)
+
+POST /api/v1/crew/{id}/share (consent-scoped share tokens for tender)
+
+Tenders
+
+POST /api/v1/tenders GET /api/v1/tenders/{id} PUT /api/v1/tenders/{id} DELETE /api/v1/tenders/{id}
+
+GET /api/v1/tenders/search?q=&lat=&lon=&radius=&capability=
+
+Matching & Discovery
+
+POST /api/v1/matching/run?tender_id=
+
+GET /api/v1/matching/tender/{id} → ranked contractors (with factors)
+
+GET /api/v1/matching/company/{org_id} → ranked tenders
+
+POST /api/v1/shortlists
+
+POST /api/v1/bid-requests
+
+Bids, nominations & awards
+
+POST /api/v1/bids GET /api/v1/tenders/{id}/bids
+
+POST /api/v1/bids/{id}/nominations (crew)
+
+POST /api/v1/tenders/{id}/award
+
+Messaging
+
+GET /api/v1/threads?org_id= POST /api/v1/threads/{id}/messages
+
+Ratings & analytics
+
+POST /api/v1/ratings GET /api/v1/orgs/{id}/ratings
+
+GET /api/v1/analytics/* (dashboards & benchmarks)
+
+Admin
+
+GET /api/v1/admin/reports POST /api/v1/admin/flags/{id}/resolve
+
+Security & privacy (crew data emphasized)
+
+JWT with refresh rotation; org-scoped RBAC and field-level rules for crew PII.
+
+TLS in transit, encrypted at rest; doc AV scanning; audit logs.
+
+Consent logs for crew data sharing with tenderers; granular access (only nominated individuals visible); data retention & right-to-erasure.
+
+UI acceptance criteria (demoable)
+
+Tenderer posts a tender → system runs matching → ranked contractor list with Score, Rating, Distance, Availability, Compliance, Capability fit %.
+
+Click row → details drawer with Why Matched, compliance badges, ratings, and (post-shortlist) a Crew preview panel.
+
+Tenderer requests bids from top 3; contractors receive notifications and submit bids (one includes crew pre-nominations).
+
+Tenderer opens bid compare (3-way), inspects nominated crew (docs/expiry statuses), messages, then awards.
+
+On award, contractor finalizes crew nominations; tenderer downloads a site pass pack (consolidated doc bundle + status table).
+
+Job closure triggers two-way ratings; scores roll into historical reliability (S_H) and update future rankings.
+
+Quality, tests & DevEx
+
+Backend: pytest on permissions, matching, crew doc expiry, bid workflows.
+
+Frontend: jest/RTL on ranked tables, details drawer, nomination wizard, bid room.
+
+E2E: Playwright flows: (a) tender→match→bid→award→rate; (b) crew nomination with expired doc → renewal prompt.
+
+docker compose up runs api, db, redis, (search), web; seed data includes example crew and expiries.
+
+Roadmap (phased)
+
+0–3 months: Ranked lists with explainability; pre-qual packs; bid room & Q&A; ratings→reliability; email notifications; Xero export; crew profiles + nomination + pass-out packs.
+
+3–6 months: Capacity calendars; milestone contracts/variations; dispute flow; ABN/insurance verification; Procore/Xero integrations; heatmaps.
+
+6–12 months: Win-probability model; subscription tiers; SSO/SOC2; public profile widgets; public tender importer; enterprise pilots.
+
+Brand & UX
+
+Name: Tender. Tagline: “Match with the right contractor.”
+
+Modern B2B visuals; accessible contrasts; responsive, keyboard-friendly ranked tables; tasteful play on the meme without consumer swiping.
+
+Implement per this prompt and align deeper architectural choices to the attached development package (architecture, services, stack, deployment).

@@ -45,12 +45,21 @@ interface SubmitBidDialogProps {
 export function SubmitBidDialog({ tenderId, contractorId, trigger }: SubmitBidDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedCrew, setSelectedCrew] = useState<string[]>([]);
+  const [selectedScopeItems, setSelectedScopeItems] = useState<string[]>([]);
   const { toast } = useToast();
 
   const { data: crewMembers = [] } = useQuery({
     queryKey: ['/api/crew', contractorId],
     queryFn: () => fetch(`/api/crew?organizationId=${contractorId}`).then(res => res.json()),
   });
+
+  const { data: tenderResponse } = useQuery({
+    queryKey: ['/api/tenders', tenderId],
+    queryFn: () => fetch(`/api/tenders/${tenderId}`).then(res => res.json()),
+  });
+
+  const tender = tenderResponse?.tender;
+  const scopeOfWork = tender?.scopeOfWork || [];
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -72,6 +81,7 @@ export function SubmitBidDialog({ tenderId, contractorId, trigger }: SubmitBidDi
         ...data,
         proposedCrew: selectedCrew,
         crewCount: selectedCrew.length || data.crewCount,
+        selectedScopeItems,
       };
 
       const response = await apiRequest("POST", "/api/bids", bidData);
@@ -86,6 +96,7 @@ export function SubmitBidDialog({ tenderId, contractorId, trigger }: SubmitBidDi
       setOpen(false);
       form.reset();
       setSelectedCrew([]);
+      setSelectedScopeItems([]);
     },
     onError: (error: Error) => {
       toast({
@@ -105,6 +116,14 @@ export function SubmitBidDialog({ tenderId, contractorId, trigger }: SubmitBidDi
       prev.includes(memberId) 
         ? prev.filter(id => id !== memberId)
         : [...prev, memberId]
+    );
+  };
+
+  const toggleScopeItem = (item: string) => {
+    setSelectedScopeItems(prev => 
+      prev.includes(item) 
+        ? prev.filter(i => i !== item)
+        : [...prev, item]
     );
   };
 
@@ -185,6 +204,36 @@ export function SubmitBidDialog({ tenderId, contractorId, trigger }: SubmitBidDi
                 </FormItem>
               )}
             />
+
+            {scopeOfWork.length > 0 && (
+              <div>
+                <FormLabel>Scope of Work</FormLabel>
+                <p className="text-xs text-muted-foreground mt-1 mb-2">
+                  Select all items you agree to complete as part of your bid
+                </p>
+                <div className="border rounded-md p-3 space-y-2 max-h-48 overflow-y-auto">
+                  {scopeOfWork.map((item: string, index: number) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <Checkbox
+                        id={`scope-${index}`}
+                        checked={selectedScopeItems.includes(item)}
+                        onCheckedChange={() => toggleScopeItem(item)}
+                        data-testid={`checkbox-scope-item-${index}`}
+                      />
+                      <label
+                        htmlFor={`scope-${index}`}
+                        className="text-sm flex-1 cursor-pointer leading-relaxed"
+                      >
+                        {item}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedScopeItems.length} of {scopeOfWork.length} item(s) selected
+                </p>
+              </div>
+            )}
 
             {crewMembers.length > 0 && (
               <div>

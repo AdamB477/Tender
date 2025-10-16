@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DollarSign, Clock, Users, FileText, MapPin, Star } from "lucide-react";
+import { DollarSign, Clock, Users, FileText, MapPin, Star, CheckCircle2 } from "lucide-react";
 
 interface ViewBidDetailsDialogProps {
   bidId: string;
@@ -133,6 +133,28 @@ export function ViewBidDetailsDialog({ bidId, open, onOpenChange, trigger }: Vie
                 <div className="bg-muted p-4 rounded-md">
                   <p className="text-sm whitespace-pre-wrap">{bid.methodStatement}</p>
                 </div>
+              </div>
+            )}
+
+            {bid.selectedScopeItems && bid.selectedScopeItems.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Agreed Scope of Work
+                </h4>
+                <div className="bg-muted p-4 rounded-md">
+                  <ul className="space-y-2">
+                    {bid.selectedScopeItems.map((item: string, index: number) => (
+                      <li key={index} className="flex items-start gap-2 text-sm">
+                        <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Contractor has agreed to complete {bid.selectedScopeItems.length} item(s)
+                </p>
               </div>
             )}
 

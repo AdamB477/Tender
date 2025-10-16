@@ -131,7 +131,7 @@ export function SubmitBidDialog({ tenderId, contractorId, trigger }: SubmitBidDi
               name="price"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Bid Price (£)</FormLabel>
+                  <FormLabel>Bid Price ($)</FormLabel>
                   <FormControl>
                     <Input
                       type="number"

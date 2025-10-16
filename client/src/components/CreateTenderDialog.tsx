@@ -196,7 +196,7 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
                 name="budgetMin"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Min Budget (£)</FormLabel>
+                    <FormLabel>Min Budget ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -215,7 +215,7 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
                 name="budgetMax"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Max Budget (£)</FormLabel>
+                    <FormLabel>Max Budget ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"

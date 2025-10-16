@@ -132,7 +132,7 @@ export function ViewBidsDialog({ tenderId, trigger }: ViewBidsDialogProps) {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <div className="text-xs text-muted-foreground">Bid Price</div>
-                          <div className="font-semibold">£{parseFloat(bid.price).toLocaleString()}</div>
+                          <div className="font-semibold">${parseFloat(bid.price).toLocaleString()}</div>
                         </div>
                       </div>
 

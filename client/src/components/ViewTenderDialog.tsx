@@ -88,7 +88,7 @@ export function ViewTenderDialog({ tenderId, trigger }: ViewTenderDialogProps) {
                   Budget Range
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  £{budget.min?.toLocaleString()} - £{budget.max?.toLocaleString()}
+                  ${budget.min?.toLocaleString()} - ${budget.max?.toLocaleString()}
                 </p>
               </div>
 

@@ -93,6 +93,8 @@ export function CreateTenderDialog({ organizationId, trigger }: CreateTenderDial
           ? requiredComplianceText.split(",").map((s) => s.trim()).filter(Boolean)
           : [],
         scopeOfWork: scopeItems,
+        deadline: rest.deadline ? new Date(rest.deadline) : new Date(),
+        startDate: rest.startDate ? new Date(rest.startDate) : undefined,
       };
 
       const response = await apiRequest("POST", "/api/tenders", tenderData);

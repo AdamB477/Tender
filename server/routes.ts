@@ -43,7 +43,13 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/tenders", async (req, res) => {
-    const validated = insertTenderSchema.parse(req.body);
+    // Convert date strings to Date objects for Zod validation
+    const body = {
+      ...req.body,
+      deadline: req.body.deadline ? new Date(req.body.deadline) : undefined,
+      startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+    };
+    const validated = insertTenderSchema.parse(body);
     const tender = await storage.createTender(validated);
     res.json(tender);
   });

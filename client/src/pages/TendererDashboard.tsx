@@ -1,11 +1,11 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { StatsCard } from "@/components/StatsCard";
 import { ContractorListItem } from "@/components/ContractorListItem";
 import { BidCard } from "@/components/BidCard";
 import { ContractorDetailsDrawer } from "@/components/ContractorDetailsDrawer";
 import { CreateTenderDialog } from "@/components/CreateTenderDialog";
-import { ViewBidsDialog } from "@/components/ViewBidsDialog";
+import { ViewBidDetailsDialog } from "@/components/ViewBidDetailsDialog";
 import { FileText, Users, DollarSign, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,8 @@ const DEMO_TENDER_ID = "tender-1";
 
 export default function TendererDashboard() {
   const [selectedContractor, setSelectedContractor] = useState<any>(null);
+  const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
   const { toast } = useToast();
-  const viewBidsButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: stats } = useQuery({
     queryKey: ['/api/stats/tenderer', DEMO_ORG_ID],
@@ -211,7 +211,7 @@ export default function TendererDashboard() {
               <BidCard
                 key={bid.id}
                 {...bid}
-                onView={() => viewBidsButtonRef.current?.click()}
+                onView={() => setSelectedBidId(bid.id)}
                 onShortlist={() => updateBidStatusMutation.mutate({ bidId: bid.id, status: "shortlisted" })}
                 onAward={() => updateBidStatusMutation.mutate({ bidId: bid.id, status: "awarded" })}
               />
@@ -236,16 +236,13 @@ export default function TendererDashboard() {
         />
       )}
 
-      <ViewBidsDialog 
-        tenderId={DEMO_TENDER_ID}
-        trigger={
-          <button 
-            ref={viewBidsButtonRef}
-            style={{ display: 'none' }}
-            data-testid="hidden-view-bids-trigger"
-          />
-        }
-      />
+      {selectedBidId && (
+        <ViewBidDetailsDialog 
+          bidId={selectedBidId}
+          open={!!selectedBidId}
+          onOpenChange={(open) => !open && setSelectedBidId(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { StatsCard } from "@/components/StatsCard";
 import { ContractorListItem } from "@/components/ContractorListItem";
@@ -18,8 +18,8 @@ const DEMO_TENDER_ID = "tender-1";
 
 export default function TendererDashboard() {
   const [selectedContractor, setSelectedContractor] = useState<any>(null);
-  const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
   const { toast } = useToast();
+  const viewBidsButtonRef = useRef<HTMLButtonElement>(null);
 
   const { data: stats } = useQuery({
     queryKey: ['/api/stats/tenderer', DEMO_ORG_ID],
@@ -55,7 +55,7 @@ export default function TendererDashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bids"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      queryClient.invalidateQueries({ queryKey: ['/api/stats/tenderer', DEMO_ORG_ID] });
       toast({
         title: "Success",
         description: "Bid status updated successfully",
@@ -101,6 +101,14 @@ export default function TendererDashboard() {
 
   const selectedContractorDetails = selectedContractor ? {
     ...selectedContractor,
+    logo: selectedContractor.logoUrl,
+    location: selectedContractor.address || `${selectedContractor.latitude}, ${selectedContractor.longitude}`,
+    description: selectedContractor.description || "No description available",
+    capabilities: selectedContractor.capabilities || [],
+    whyMatched: selectedContractor.whyMatched || [
+      { type: "skills" as const, value: `${selectedContractor.matchScore || 0}%` },
+      { type: "location" as const, value: selectedContractor.distance || "Unknown" },
+    ],
     compliance: complianceDocs.map((doc: any) => ({
       type: doc.type,
       status: doc.status,
@@ -203,7 +211,7 @@ export default function TendererDashboard() {
               <BidCard
                 key={bid.id}
                 {...bid}
-                onView={() => setSelectedBidId(bid.id)}
+                onView={() => viewBidsButtonRef.current?.click()}
                 onShortlist={() => updateBidStatusMutation.mutate({ bidId: bid.id, status: "shortlisted" })}
                 onAward={() => updateBidStatusMutation.mutate({ bidId: bid.id, status: "awarded" })}
               />
@@ -228,17 +236,16 @@ export default function TendererDashboard() {
         />
       )}
 
-      {selectedBidId && (
-        <ViewBidsDialog 
-          tenderId={DEMO_TENDER_ID}
-          trigger={
-            <div 
-              style={{ display: 'none' }} 
-              onClick={() => setSelectedBidId(null)}
-            />
-          }
-        />
-      )}
+      <ViewBidsDialog 
+        tenderId={DEMO_TENDER_ID}
+        trigger={
+          <button 
+            ref={viewBidsButtonRef}
+            style={{ display: 'none' }}
+            data-testid="hidden-view-bids-trigger"
+          />
+        }
+      />
     </div>
   );
 }

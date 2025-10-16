@@ -1,20 +1,25 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { StatsCard } from "@/components/StatsCard";
 import { ContractorListItem } from "@/components/ContractorListItem";
 import { BidCard } from "@/components/BidCard";
 import { ContractorDetailsDrawer } from "@/components/ContractorDetailsDrawer";
 import { CreateTenderDialog } from "@/components/CreateTenderDialog";
+import { ViewBidsDialog } from "@/components/ViewBidsDialog";
 import { FileText, Users, DollarSign, TrendingUp } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 const DEMO_ORG_ID = "org-tenderer-1";
 const DEMO_TENDER_ID = "tender-1";
 
 export default function TendererDashboard() {
   const [selectedContractor, setSelectedContractor] = useState<any>(null);
+  const [selectedBidId, setSelectedBidId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: stats } = useQuery({
     queryKey: ['/api/stats/tenderer', DEMO_ORG_ID],
@@ -41,6 +46,28 @@ export default function TendererDashboard() {
     queryKey: ['/api/crew', selectedContractor?.id],
     enabled: !!selectedContractor?.id,
     queryFn: () => fetch(`/api/crew?organizationId=${selectedContractor.id}`).then(res => res.json()),
+  });
+
+  const updateBidStatusMutation = useMutation({
+    mutationFn: async ({ bidId, status }: { bidId: string; status: string }) => {
+      const response = await apiRequest("PATCH", `/api/bids/${bidId}/status`, { status });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bids"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/stats"] });
+      toast({
+        title: "Success",
+        description: "Bid status updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update bid status",
+        variant: "destructive",
+      });
+    },
   });
 
   const mappedContractors = contractors.map((c: any) => ({
@@ -176,9 +203,9 @@ export default function TendererDashboard() {
               <BidCard
                 key={bid.id}
                 {...bid}
-                onView={() => console.log("View bid", bid.id)}
-                onShortlist={() => console.log("Shortlist bid", bid.id)}
-                onAward={() => console.log("Award bid", bid.id)}
+                onView={() => setSelectedBidId(bid.id)}
+                onShortlist={() => updateBidStatusMutation.mutate({ bidId: bid.id, status: "shortlisted" })}
+                onAward={() => updateBidStatusMutation.mutate({ bidId: bid.id, status: "awarded" })}
               />
             ))}
           </div>
@@ -198,6 +225,18 @@ export default function TendererDashboard() {
             console.log("Message", selectedContractorDetails.name);
             setSelectedContractor(null);
           }}
+        />
+      )}
+
+      {selectedBidId && (
+        <ViewBidsDialog 
+          tenderId={DEMO_TENDER_ID}
+          trigger={
+            <div 
+              style={{ display: 'none' }} 
+              onClick={() => setSelectedBidId(null)}
+            />
+          }
         />
       )}
     </div>
